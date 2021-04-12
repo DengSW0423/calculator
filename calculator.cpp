@@ -4,7 +4,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSizePolicy>
-#include <QDebug>
+#include <stack>
+#include <string>
 
 Calculator::Calculator(QWidget *parent)
     : QWidget(parent)
@@ -142,8 +143,73 @@ void Calculator::btnPointClicked()
 
 void Calculator::btnEqualClicked()
 {
-    text += "=";
-    lineEdit->setText(text);
+    std::string s = text.toUtf8().constData();
+    int length = s.length();
+    std::stack<double> stack;
+    double num = 0;
+    char op = '+';
+    int index = 0;
+    while (index < length) {
+        if(((s[index] == '*' || s[index] == '/') && index == 0) ||
+                ((s[index] == '+' || s[index] == '*' || s[index] == '/' || s[index] == '-') && (index == length - 1))){
+            text = "Invalid Expression!";
+            lineEdit->setText(text);
+            break;
+        }
+
+        if(index >= 1 && (s[index] == '+' || s[index] == '*' || s[index] == '/') &&
+                (s[index - 1] == '+' || s[index - 1] == '*' || s[index - 1] == '/')){
+            text = "Invalid Expression!";
+            lineEdit->setText(text);
+            break;
+        }
+
+        if((s[index] == '-' && op == '-') && s[index + 1] == '-'){
+            text = "Invalid Expression!";
+            lineEdit->setText(text);
+            break;
+        }
+
+
+        if((s[index] == '-' && op == '-')){
+            op = '+';
+            ++index;
+        }else if(s[index] == '+' || s[index] == '*' || s[index] == '/' || s[index] == '-'){
+            op = s[index];
+            ++index;
+        }else{
+            std::string str = "";
+            while (index < length && (s[index] == '.' || (s[index] >= '0' && s[index] <= '9'))) {
+                str.append(1, s[index]);
+                ++index;
+            }
+            num = std::stod(str);
+
+            if(op == '-'){
+                num = -num;
+            }else if (op == '*') {
+                num *= stack.top();
+                stack.pop();
+            }else if (op == '/') {
+                num = stack.top() / num;
+                stack.pop();
+            }
+
+            stack.push(num);
+        }
+    }
+
+    if(text != "Invalid Expression!"){
+        double result = 0;
+        while (!stack.empty()) {
+            result += stack.top();
+            stack.pop();
+        }
+
+        s = std::to_string(result);
+        text = QString::fromUtf8(s.c_str());
+        lineEdit->setText(text);
+    }
 }
 
 void Calculator::btnClearClicked()
@@ -185,4 +251,3 @@ void Calculator::btnDivideClicked()
 Calculator::~Calculator()
 {
 }
-
