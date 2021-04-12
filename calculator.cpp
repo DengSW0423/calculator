@@ -6,6 +6,7 @@
 #include <QSizePolicy>
 #include <stack>
 #include <string>
+#include <QDebug>
 
 Calculator::Calculator(QWidget *parent)
     : QWidget(parent)
@@ -170,6 +171,11 @@ void Calculator::btnEqualClicked()
             break;
         }
 
+        if(s[index] == '/' && s[index + 1] == '0'){
+            text = "Invalid Expression!";
+            lineEdit->setText(text);
+            break;
+        }
 
         if((s[index] == '-' && op == '-')){
             op = '+';
